@@ -26,7 +26,7 @@ class TodoControllerTest extends FunSuite {
   test("sfd") {
 
     import cats.~>
-    val first: List ~> Option = new[List ~> Option] {
+    val first: List ~> Option = new ~>[List, Option] {
       def apply[A](l: List[A]): Option[A] = l.headOption
     }
 
@@ -35,4 +35,26 @@ class TodoControllerTest extends FunSuite {
     }
   }
 
+  test("sum of array") {
+    val list = List(1, 3, 5, 6, 8)
+
+    list
+
+  }
+
+  //  def fuck(numbers: List[Int]): List[Int] = {
+  //
+  //    if (numbers.length == 2) {
+  //      numbers
+  //    } else if (isEven(numbers.length))
+  //      1 to (numbers.length / 2)
+  //
+  //
+  //    else {
+  //      val middium = numbers.length / 2 + 1
+  //      List(numbers.sum - numbers(middium), numbers(middium))
+  //
+  //    }
+
 }
+
