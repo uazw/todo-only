@@ -5,9 +5,8 @@ import cats.syntax.applicative._
 import entity.Task
 
 import java.util.UUID
-import javax.inject.Inject
 
-class TaskRepository[F[_] : Applicative] @Inject()() {
+class TaskRepository[F[_] : Applicative]() {
 
   def create(task: Task): F[Task] = {
     tasks = task :: tasks

@@ -7,10 +7,7 @@ import controllers.request.CreateTaskRequest
 import entity.Task
 import repository.TaskRepository
 
-import javax.inject.{Inject, Singleton}
-
-@Singleton
-class TaskService[F[_] : Monad] @Inject()(val taskRepository: TaskRepository[F]) {
+class TaskService[F[_] : Monad](val taskRepository: TaskRepository[F]) {
 
   def create(request: CreateTaskRequest): F[Task] = for {
     taskId <- taskRepository.nextTaskId()
