@@ -8,10 +8,13 @@ import java.util.UUID
 import javax.inject.Inject
 
 class TaskRepository[F[_] : Applicative] @Inject()() {
-  def create(task: Task): F[Unit] = (tasks = task :: tasks).pure[F]
+
+  def create(task: Task): F[Task] = {
+    tasks = task :: tasks
+    task.pure[F]
+  }
 
   def nextTaskId(): F[String] = UUID.randomUUID().toString.pure[F]
-
 
   private[this] var tasks = List(
     Task(UUID.randomUUID().toString, "wake up", "wake you up"),
