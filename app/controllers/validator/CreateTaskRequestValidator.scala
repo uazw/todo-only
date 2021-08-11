@@ -1,25 +1,26 @@
 package controllers.validator
 
-import cats.data.ValidatedNec
+import cats.data.{NonEmptyList, Validated, ValidatedNel}
 import cats.implicits.catsSyntaxTuple2Semigroupal
-import cats.syntax.validated._
 import controllers.request.CreateTaskRequest
 
 object CreateTaskRequestValidator {
 
-  type ValidationResult[A] = ValidatedNec[DomainValidation, A]
+  type ValidationResult[A] = ValidatedNel[DomainValidation, A]
 
-  def validate(request: CreateTaskRequest): ValidationResult[CreateTaskRequest] =
+  private val regex = "^[a-zA-Z0-9]{1,50}$".r
+
+  def validate(request: CreateTaskRequest): Either[NonEmptyList[DomainValidation], CreateTaskRequest] =
     (validateTaskName(request.taskName),
-      validateDescription(request.description)).mapN(CreateTaskRequest)
+      validateDescription(request.description)).mapN(CreateTaskRequest).toEither
 
   private def validateTaskName(taskName: String): ValidationResult[String] = {
-    val regex = "^[a-zA-Z0-9]{1,50}$".r
-    if (regex.matches(taskName)) taskName.validNec else TaskNameIsOutOfLength.invalidNec
+    Validated.condNel(regex.matches(taskName), taskName, TaskNameIsOutOfLength)
   }
 
-  private def validateDescription(description: String): ValidationResult[String] = if (description.length <= 500) description.validNec else TaskDescriptionOutOfLength.invalidNec
-
+  private def validateDescription(description: String): ValidationResult[String] = {
+    Validated.condNel(description.length <= 500, description, TaskDescriptionOutOfLength)
+  }
 }
 
 sealed trait DomainValidation {
