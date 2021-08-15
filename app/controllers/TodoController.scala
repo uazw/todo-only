@@ -1,43 +1,42 @@
 package controllers
 
-import cats.Applicative
-import cats.data.{EitherT, NonEmptyList}
+import cats.ApplicativeError
 import cats.syntax.either._
 import controllers.extension.http._
-import controllers.request.CreateTaskRequest
-import controllers.validator.{CreateTaskRequestValidator, DomainValidation}
-import entity.Task
+import controllers.request.{CreateTaskRequest, UpdateTaskRequest}
+import controllers.validator.{CreateTaskRequestValidator, UpdateTaskRequestValidator}
+import effect.effect._
 import play.api.libs.json._
 import play.api.mvc._
 import service.TaskService
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
 
-class TodoController(val taskService: TaskService[Future])
+class TodoController(val taskService: TaskService[Effect])
                     (implicit cc: ControllerComponents, ec: ExecutionContext) extends AbstractController(cc) {
 
-  def all(): Action[AnyContent] = Action.async(_ => taskService.allTasks().map(tasks => Ok(Json.toJson(tasks))))
+  def all(): Action[AnyContent] = Action.asyncEitherT {
+    taskService.allTasks().map(tasks => Ok(Json.toJson(tasks)))
+  }
+
 
   def createTask(): Action[JsValue] = Action.asyncEitherT(parse.json) { request =>
     for {
-      toCreated <- retrieveParam[Future, CreateTaskRequest](request.body.validate[CreateTaskRequest])
-      request <- CreateTaskRequestValidator.validate(toCreated).liftTo[EitherT[Future, NonEmptyList[DomainValidation], *]]
-        .leftMap(x => BadRequest(Json.toJson(x.toList.map(_.errorMessage))))
-      _ <- EitherT[Future, Result, Task](taskService.create(request).map(Either.right(_)))
+      toCreated <- retrieveParam(request.body.validate[CreateTaskRequest])
+      request <- CreateTaskRequestValidator.validate(toCreated).liftTo[Effect]
+      _ <- taskService.create(request)
     } yield Created
   }
 
   def updateTask(taskId: String): Action[JsValue] = Action.asyncEitherT(parse.json) { request =>
-    //    for {
-    //      toCreated <- retrieveParam[Future, UpdateTaskRequest](request.body.validate[UpdateTaskRequest])
-    //      command <- UpdateTaskRequestValidator.validate(toCreated).liftTo[EitherT[Future, NonEmptyList[DomainValidation], *]]
-    //        .leftMap(x => BadRequest(Json.toJson(x.toList.map(_.errorMessage))))
-    //      createdTask <- taskService.update(taskId, command)
-    //    } yield Ok(Json.toJson(createdTask))
-    null
+    for {
+      toCreated <- retrieveParam(request.body.validate[UpdateTaskRequest])
+      command <- UpdateTaskRequestValidator.validate(toCreated).liftTo[Effect]
+      createdTask <- taskService.update(taskId, command)
+    } yield Ok(Json.toJson(createdTask))
   }
 
-  private def retrieveParam[F[_] : Applicative, T](request: JsResult[T]): EitherT[F, Result, T] = {
-    EitherT.fromEither(request.asEither).leftMap(e => BadRequest(JsError.toJson(e)))
+  private def retrieveParam[T](request: JsResult[T])(implicit applicative: ApplicativeError[Effect, Error]): Effect[T] = {
+    request.asEither.fold(_ => applicative.raiseError(Error("sfdf")), applicative.pure)
   }
 }

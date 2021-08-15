@@ -1,5 +1,6 @@
 package wiring
 
+import effect.effect.Effect
 import play.api.ApplicationLoader.Context
 import play.api.BuiltInComponentsFromContext
 import play.api.routing.Router
@@ -13,11 +14,8 @@ class AppComponents(context: Context)
   extends BuiltInComponentsFromContext(context)
     with HttpFiltersComponents {
 
-  import cats.instances.future._
-
-  lazy val repository = new TaskRepository()
+  lazy val repository = new TaskRepository[Effect]()
   lazy val service = new TaskService(repository)
-
   lazy val applicationController = new controllers.TodoController(service)(controllerComponents, executionContext)
 
   lazy val router: Router = new Routes(httpErrorHandler, applicationController)

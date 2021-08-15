@@ -10,9 +10,9 @@ object CreateTaskRequestValidator {
 
   private val regex = "^[a-zA-Z0-9]{1,50}$".r
 
-  def validate(request: CreateTaskRequest): Either[NonEmptyList[DomainValidation], CreateTaskRequest] =
+  def validate(request: CreateTaskRequest): Either[NonEmptyList[String], CreateTaskRequest] =
     (validateTaskName(request.taskName),
-      validateDescription(request.description)).mapN(CreateTaskRequest).toEither
+      validateDescription(request.description)).mapN(CreateTaskRequest).leftMap(_.map(_.errorMessage)).toEither
 
   private def validateTaskName(taskName: String): ValidationResult[String] = {
     Validated.condNel(regex.matches(taskName), taskName, TaskNameIsOutOfLength)
@@ -29,9 +29,9 @@ object UpdateTaskRequestValidator {
 
   private val regex = "^[a-zA-Z0-9]{1,50}$".r
 
-  def validate(request: UpdateTaskRequest): Either[NonEmptyList[DomainValidation], UpdateTaskRequest] =
+  def validate(request: UpdateTaskRequest): Either[NonEmptyList[String], UpdateTaskRequest] =
     (validateTaskName(request.taskName),
-      validateDescription(request.description)).mapN(UpdateTaskRequest).toEither
+      validateDescription(request.description)).mapN(UpdateTaskRequest).leftMap(_.map(_.errorMessage)).toEither
 
   private def validateTaskName(taskName: String): ValidationResult[String] = {
     Validated.condNel(regex.matches(taskName), taskName, TaskNameIsOutOfLength)

@@ -21,12 +21,12 @@ class TaskRepository[F[_] : Applicative]() {
 
   def queryById(taskId: String): F[Option[Task]] = tasks.get(taskId).pure
 
-  def nextTaskId(): F[String] = UUID.randomUUID().toString.pure[F]
+  def nextTaskId(): F[String] = UUID.randomUUID().toString.pure
 
   def create(task: Task): F[Task] = {
     tasks += (task.taskId -> task)
     task.pure[F]
   }
 
-  def all(): F[List[Task]] = tasks.values.toList.pure[F]
+  def all(): F[List[Task]] = tasks.values.toList.pure
 }

@@ -1,24 +1,24 @@
 package service
 
-import cats.Monad
-import cats.data.OptionT
+import cats.MonadError
 import cats.syntax.flatMap._
 import cats.syntax.functor._
 import controllers.request.{CreateTaskRequest, UpdateTaskRequest}
+import effect.effect.Error
 import entity.Task
 import repository.TaskRepository
 
-class TaskService[F[_] : Monad](val taskRepository: TaskRepository[F]) {
+class TaskService[F[_]](val taskRepository: TaskRepository[F]) {
 
-  def update(taskId: String, command: UpdateTaskRequest): F[Option[Task]] = {
-    (for {
-      savedTaskOption <- OptionT(taskRepository.queryById(taskId))
-      task = Task(savedTaskOption.taskId, command.taskName, command.description)
-      _ <- OptionT(taskRepository.update(task).map(Some(_)))
-    } yield task).value
-  }
+  def update(taskId: String, command: UpdateTaskRequest)(implicit ae: MonadError[F, Error]): F[Task] = for {
+    savedTaskOption <- taskRepository.queryById(taskId)
+    savedTask <- ae.fromOption(savedTaskOption, Error("task is not existed"))
+    task = Task(savedTask.taskId, command.taskName, command.description)
+    _ <- taskRepository.update(task)
+  } yield task
 
-  def create(request: CreateTaskRequest): F[Task] = for {
+
+  def create(request: CreateTaskRequest)(implicit ae: MonadError[F, Error]): F[Task] = for {
     taskId <- taskRepository.nextTaskId()
     task = Task(taskId, request.taskName, request.description)
     savedTask <- taskRepository.create(task)
