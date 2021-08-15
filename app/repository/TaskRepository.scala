@@ -7,6 +7,11 @@ import entity.Task
 import java.util.UUID
 
 class TaskRepository[F[_] : Applicative]() {
+  def delete(taskId: String): F[Unit] = {
+    tasks = tasks - taskId
+    ().pure
+  }
+
 
   private[this] var tasks: Map[String, Task] = List(
     Task(UUID.randomUUID().toString, "wake up", "wake you up"),

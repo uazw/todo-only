@@ -1,6 +1,7 @@
 package controllers
 
 import cats.ApplicativeError
+import cats.data.EitherT
 import cats.syntax.either._
 import controllers.extension.http._
 import controllers.request.{CreateTaskRequest, UpdateTaskRequest}
@@ -10,15 +11,24 @@ import play.api.libs.json._
 import play.api.mvc._
 import service.TaskService
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 
 class TodoController(val taskService: TaskService[Effect])
                     (implicit cc: ControllerComponents, ec: ExecutionContext) extends AbstractController(cc) {
 
   def all(): Action[AnyContent] = Action.asyncEitherT {
-    taskService.allTasks().map(tasks => Ok(Json.toJson(tasks)))
+    val value: EitherT[Future, Error, Result] = for {
+      tasks <- taskService.allTasks()
+    } yield Ok(Json.toJson(tasks))
+    value
   }
 
+
+  def deleteTask(taskId: String): Action[AnyContent] = Action.asyncEitherT {
+    for {
+      _ <- taskService.delete(taskId)
+    } yield NoContent
+  }
 
   def createTask(): Action[JsValue] = Action.asyncEitherT(parse.json) { request =>
     for {

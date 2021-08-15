@@ -9,6 +9,8 @@ import entity.Task
 import repository.TaskRepository
 
 class TaskService[F[_]](val taskRepository: TaskRepository[F]) {
+  def delete(taskId: String): F[Unit] = taskRepository.delete(taskId)
+
 
   def update(taskId: String, command: UpdateTaskRequest)(implicit ae: MonadError[F, Error]): F[Task] = for {
     savedTaskOption <- taskRepository.queryById(taskId)

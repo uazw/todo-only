@@ -6,6 +6,7 @@
 # An example controller showing a sample home page
 GET     /todo                       controllers.TodoController.all()
 POST    /todo                       controllers.TodoController.createTask()
-PUT     /todo/:taskId                   controllers.TodoController.updateTask(taskId: String)
+PUT     /todo/:taskId               controllers.TodoController.updateTask(taskId: String)
+Delete     /todo/:taskId            controllers.TodoController.deleteTask(taskId: String)
 
 # Map static resources from the /public folder to the /assets URL path
